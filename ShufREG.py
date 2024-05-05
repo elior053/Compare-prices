@@ -46,4 +46,4 @@ def process_folder(folder_path, db_file):
                 update_items_to_db(xml_path, db_file)
 
 # Example usage:
-process_folder(r'C:\Users\elior\PycharmProjects\priceses\Shufersal.xml\SHUFreg', 'priceDB.db')
+process_folder(r'priceses\Shufersal.xml\SHUFreg', 'priceDB.db')
