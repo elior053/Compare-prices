@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Get Town</title>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+</head>
+<body>
+    <center>
+        <h1>Get Town</h1>
+
+        <h2>Select Your Preferred Town:</h2>
+        <input type="text" id="townInput" placeholder="Type to search for towns">
+        <ul id="townList"></ul>
+    </center>
+
+    <script>
+        $(document).ready(function () {
+            // Autocomplete for town input
+            $('#townInput').autocomplete({
+                source: function (request, response) {
+                    var term = request.term;
+                    $.ajax({
+                        url: '/get_town_suggestions', // Replace with the actual URL to fetch town suggestions
+                        dataType: 'json',
+                        data: {
+                            term: term
+                        },
+                        success: function (data) {
+                            response(data);
+                        }
+                    });
+                },
+                minLength: 2,
+                select: function(event, ui) {
+                    // When a town is selected from the list, populate the input with the selected value
+                    $('#townInput').val(ui.item.value);
+                    return false; // Prevent the default behavior
+                }
+            });
+        });
+    </script>
+
+$(document).ready(function () {
+    // Autocomplete for store input
+    $('#storeInput').autocomplete({
+        source: function (request, response) {
+            var town = $('#townInput').val();  // Get the selected town
+            var term = request.term;
+            $.ajax({
+                url: '/get_store',
+                dataType: 'json',
+                data: {
+                    town: town,  // Pass the selected town as a parameter
+                    term: term
+                },
+                success: function (data) {
+                    response(data);
+                }
+            });
+        },
+        minLength: 2,
+        select: function(event, ui) {
+            // When a store is selected from the list, populate the input with the selected value
+            $('#storeInput').val(ui.item.value);
+            return false; // Prevent the default behavior
+        }
+    });
+
+    // Display a pick menu for store suggestions
+    $('#storeInput').autocomplete("option", "appendTo", "#storeList");
+});
+
+</body>
+</html>

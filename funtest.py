@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Get Town and Store</title>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+</head>
+<body>
+    <center>
+        <h1>Get Town</h1>
+
+        <h2>Select Your Preferred Town:</h2>
+        <input type="text" id="townInput" placeholder="Type to search for towns">
+        <ul id="townList"></ul>
+    </center>
+
+    <center>
+        <h1>Get store</h1>
+
+        <h2>Stores in Selected Town:</h2>
+        <table id="storeTable">
+            <thead>
+                <tr>
+                    <th>Store Name</th>
+                    <th></th> <!-- Add a column for the Select buttons -->
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <button id="showStoresButton" style="display: none;">Show All Stores</button>
+
+        <h2>Selected Store:</h2>
+        <p id="selectedStoreText"></p>
+    </center>
+
+    <center>
+        <p id="selectproduct"></p>
+
+        <h2>Select a Product:</h2>
+        <input type="text" id="productInput" placeholder="Type to search for products">
+        <ul id="productList"></ul>
+
+        <!-- Selected Products Table -->
+        <h2>Selected Products</h2>
+        <table id="selectedProductsTable">
+            <thead>
+                <tr>
+                    <th>Product Name</th>
+                    <th>Amount</th>
+                    <th>UnitQty</th>
+                    <th>ItemPrice</th>
+                    <th>Total Price</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <h3>Total Price: <span id="totalPrice">0</span></h3>
+    </center>
+    <script>
+        $(document).ready(function () {
+            $('#townInput').autocomplete({
+                source: function (request, response) {
+                    var term = request.term;
+                    $.ajax({
+                        url: '/get_town_suggestions',
+                        dataType: 'json',
+                        data: {
+                            term: term
+                        },
+                        success: function (data) {
+                            response(data);
+                        }
+                    });
+                },
+                minLength: 2,
+                select: function(event, ui) {
+                    $('#townInput').val(ui.item.value);
+                    populateStoreTable(ui.item.value);
+                    $('#selectedStoreText').empty();
+                    $('#showStoresButton').show();
+                }
+            });
+
+            $('#showStoresButton').click(function() {
+                var selectedTown = $('#townInput').val();
+                populateStoreTable(selectedTown);
+            });
+
+            $(document).on('click', '.select-store-button', function() {
+                var selectedStore = $(this).data('store-name');
+                $('#selectedStoreText').text('Selected Store: ' + selectedStore);
+            });
+
+            function populateStoreTable(selectedTown) {
+                $.ajax({
+                    url: '/get_stores_in_town',
+                    dataType: 'json',
+                    data: {
+                        town: selectedTown
+                    },
+                    success: function(data) {
+                        var tbody = $('#storeTable tbody');
+                        tbody.empty();
+                        data.forEach(function(storeName) {
+                            var row = $('<tr><td>' + storeName + '</td><td><button class="select-store-button" data-store-name="' + storeName + '">Select</button></td></tr>');
+                            tbody.append(row);
+                        });
+
+                        // After populating the store table, hide the product selection section
+                        $('#productSection').hide();
+                    }
+                });
+            }
+            $('#storeTable').on('click', '.select-store-button', function() {
+                var selectedStore = $(this).data('store-name');
+                $('#selectedStoreText').text('Selected Store: ' + selectedStore);
+
+                // Show the product input and populate the product autocomplete
+                $('#productSection').show();
+                $('#productInput').autocomplete({
+                    source: function (request, response) {
+                        $.ajax({
+                            url: '/get_product_suggestions',
+                            dataType: 'json',
+                            data: {
+                                term: request.term,
+                                store: selectedStore  // Pass the selected store name as a parameter
+                            },
+                            success: function (data) {
+                                response(data);
+                            }
+                        });
+                    },
+                    minLength: 2,
+                    select: function(event, ui) {
+                        var selectedProduct = ui.item.value;
+                        var unitQty = ui.item.unitQty;
+                        var itemPrice = ui.item.itemPrice;
+                        addSelectedProduct(selectedProduct, unitQty, itemPrice);
+                        $('#productInput').val(''); // Clear the product input
+                    }
+                });
+            });
+
+            function addSelectedProduct(productName, unitQty, itemPrice) {
+                var selectedProductsTable = $('#selectedProductsTable tbody');
+                var newRow = $('<tr>' +
+                    '<td>' + productName + '</td>' +
+                    '<td><input type="number" value="1" min="1"></td>' +
+                    '<td>' + unitQty + '</td>' +
+                    '<td>' + itemPrice + '</td>' +
+                    '<td class="total-price-column">0</td>' +
+                    '<td><button class="remove-product-button">Remove</button></td>' +
+                    '</tr>');
+                selectedProductsTable.append(newRow);
+                updateTotalPrice();
+            }
+
+
+            $(document).on('input', 'input[type="number"]', function() {
+                var row = $(this).closest('tr');
+                var amount = parseInt($(this).val());
+                var itemPrice = parseFloat(row.find('td:eq(3)').text());
+                var totalPrice = (amount * itemPrice).toFixed(2);
+                row.find('.total-price-column').text(totalPrice);
+                updateTotalPrice();
+            });
+
+            function updateTotalPrice() {
+                var total = 0;
+                $('.total-price-column').each(function() {
+                    total += parseFloat($(this).text());
+                });
+                $('#totalPrice').text(total.toFixed(2));
+            }
+
+            $(document).on('click', '.remove-product-button', function() {
+                $(this).closest('tr').remove();
+            });
+        });
+    </script>
+</body>
+</html>

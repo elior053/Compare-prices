@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>City Products</title>
+    <!-- Add your CSS or styling here, if necessary -->
+</head>
+<body>
+    <h1>Branches and Products in Selected City</h1>
+
+    <!-- Table to Display Branches and Products -->
+    <table id="branchesAndProductsTable">
+        <thead>
+            <tr>
+                <th>Branch Name</th>
+                <th>Product Name</th>
+                <th>Unit Quantity</th>
+                <th>Item Price</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <!-- Add a link/button to return to the main page if needed -->
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script>
+          <!-- Add your JavaScript for fetching and displaying data here -->
+          $(document).ready(function () {
+          var selectedCity = "ReplaceWithSelectedCity"; // Replace with the actual selected city
+
+          // Send an AJAX request to fetch branch and product data for the selected city
+          $.ajax({
+              url: '/get_branches_and_products_in_city',
+              dataType: 'json',
+              data: {
+                  city: selectedCity
+              },
+              success: function (data) {
+                  var tableBody = $('#branchesAndProductsTable tbody');
+
+                  // Iterate through the data and populate the table
+                  data.forEach(function (entry) {
+                      var newRow = $('<tr>' +
+                          '<td>' + entry.branchName + '</td>' +
+                          '<td>' + entry.productName + '</td>' +
+                          '<td>' + entry.unitQty + '</td>' +
+                          '<td>' + entry.itemPrice + '</td>' +
+                          '</tr>');
+
+                      tableBody.append(newRow);
+                  });
+              }
+          });
+      });
+    </script>
+</body>
+</html>
